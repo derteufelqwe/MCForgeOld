@@ -1,0 +1,6 @@
+{
+    "variants": {
+        "isactivated=0": {"model": "dtm:key_block_off"},
+        "isactivated=1": {"model": "dtm:key_block_on"}
+    }
+}

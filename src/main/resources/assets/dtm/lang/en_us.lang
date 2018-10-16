@@ -1,0 +1,20 @@
+#Items
+item.tutorial_item.name=Test Item
+item.tutorial_sword.name=Test Sword
+item.laser_sword.name=Lightsaber
+item.key_item.name=Key
+
+#Blocks
+tile.block_copper.name=Copper Block
+tile.key_block.name=Keyblock
+
+#Creative Tabs
+itemGroup.tab_meins=My Stuff
+itemGroup.tab_items=My Items
+
+#Damage
+death.attack.laser=%1$s messed up with his lasersword.
+death.attack.laser=%1$s got sliced into pieces by %2$s.
+
+#GUI
+gui.tooltip=Tooltip

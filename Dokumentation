@@ -1,0 +1,265 @@
+Java:
+    extends erweitert einfach eine Klasse
+    @Override überschreibt schon vorhandene Dinge
+    implements extends für interfaces
+    in Interfaces sind nur Konstanten und Methodennamen gespeichert
+
+
+Main.Java:
+    - @Mod tells Forge that this is a Mod and FML needs to load it
+    - FMLInitialization Events are phases while loading the mod
+    - @SidedProxy(clientside, serverSide) tells forge that they are proxies
+    - instance = Instance of the Mod which is needed for GUI and Mobs
+    
+   
+Registrierung von Items und Modellen:
+    - Main.preInit = Erstelleung von Items, danach in Forge Registrieren
+    - Main.init = Packages
+    - Main.postInit = Registrierung von Events
+    - ClientProxy.preInit = OBJLoader initiieren und Modelle registrieren (ModelLoader.setCustomModelResourceLocation)
+   
+   
+Registrierung von Items:
+    - Kann in der Klasse gemacht werden, welche die Items Instanziiert
+    - Besser ist es alle Items in einem Array zu speichern und in einer seperaten Klasse zu Registrieren
+    - ?? ggf falsch: Gestartet wird die Registrierung vom onModelRegistryEvent    
+    
+    
+Proxys:
+    - They will be called on Client and Serverside - So we need Proxys
+    - Proxys split things to load for the server and things to load for the client, because the Server doesnt need to render and register Textures
+    - CommonProxy is for the Server and the Client and does not load Textures
+    - ClientProxy is for the Client only, inherits from CommonProxy and loads textures
+    
+
+Items:
+    - Neues item erzeugen, registrieren in Forge und in Minecrafft
+    - In Minecraft: ModelRecourceLocation legt den Namen fest. also dtm:beispiel_item
+    - substring(5) entfernt das automatisch erstellte item. vor dem Item Namen
+    - itemInit muss in Main init aufgerufen werden, registerRenders im Client Proxy, da nur der Client Texturen rendern muss
+    - Texture trägt den Namen wie das Item intern
+    - JSON File:
+      - parent: generated = normal item, handheld = tool
+      - texture (multiples possible) dtm:items/name
+    Spezielle Funkionen:
+    - Neues Item: New Item Class extends ItemBase Class
+    - Strg+3 + override for methods to override
+        - addInfos (advanced = Tooltip with F3+8
+        - onItemUse when used on block
+        - onItemRightClick when just clicked
+        - getRarity Color like golden apples
+        - worldIn.isRemote = Server
+
+
+3D Models:
+    - .obj Datei in Blender erstellen. Sollte im Zentrum sein und keine Rotation haben
+    - irgendwie kann man sich die ov Map anzeigen lassen
+    - .obj / .mtl Datei kommt in recource/models/item ordner
+    - in der .obj Datei kann der Name der mtl Datei geändert werden
+    - in der .mdl Datei wir die Texture mit modid:items/models/name
+    - im Blockstates Ordner wird eine json Datei angelegt, dessen Inhalt reinkopiert wird
+    - andere JSON wird entfernt
+    - unter model wird modid:3DObjekt angegeben (kein Pfad nötig)
+
+
+Tools:
+    - In der Item Class den Parameter ToolMaterial angeben
+    - neues ToolMaterial mit EnumHelper.addToolMaterial(werte)
+    - Harvestlevel -1 = unbreakable (cant enchant it tho) (return true bei onBlockDestroy and hit)
+    - But you can override the method for reducing durability to make it enchantable
+    - Attackdamage is 4 by default + the value
+
+
+Blocks:
+    - Json in blockstates, block, item
+    - Initialization in BlocksInit
+    - Registrierung im RegistryHandler
+    - Needs a material that sets its behaviour
+        - sets tools to harvest
+        - sounds when stepping on
+    - Neue Klasee welche Block extended kann erstellt werdn
+    - im Konstructor können Sachen wie Hardness usw. festgelegt werden
+    - Registrierung ist ähnlich wie bei Items
+        - Bei registerBlocks muss neben dem Block auch das Item zum Block registriert werden
+        - Dafür wird Item item = Item.getItemFromBlock(block); beim ModelLoader eingefügt und das Item geladen
+        - in der BlockBase oder eigenen Klasse muss der Block zu dem BLOCK und ITEM array hinzugefügt werden
+        - Für das Item: ItemsInit.ITEMS.add(new ItemBlock(this).setRegistryName(name));
+        - im ClientProxy registrierung hinzufügen
+        - in der Main muss die BlockInit Klasse vor der Item Klasse aufgerufen werden, da die Blockklasse Dinge zu den Items hinzufügt
+    - Funktionen:
+        - onBlockAdded: when palced
+        - onBlockDestroyedByPlayer
+        - onBlockActivated: Right Click: Open GUI
+        - breakBlock: general calss when broken
+        - Tick: let sth happen after time
+        - getItemDropped + quantityDropped
+        - onEntityWalk
+        - onBlockharvested: when destroyed with proper tool
+        - drops: an array of possible drops
+
+
+NBT Daten:
+    - nbt = new NBTTagCompount
+    - nbt = item.getTagCompound
+    - nbt.setInteger/string/boolean(value)
+    - nbt.getInteger/string/boolean(value)
+    - ItemStack.setTagCompound(nbt);
+
+
+DamageSource:
+    - DamageSeource name = new DamageSource(name_intern).arguments
+    - in language file: death.attack.name_intern= %1$s = player 1, %1$s = player 2
+    -                   death.attack.name_intern.player=
+    
+
+Events:
+    - Events werden in Main unter postInit registriert
+    - MinecraftForge.EVENT_BUS.register(new testEvent());
+    
+    
+Creative Tabs:
+    Eine neue Klasse mit dem Namen z.B. CreativeHabHandler wird erstellt
+    Ein neuer creative Tab wird erstellt:
+        public static CreativeTabs tabMeins = new CreativeTabs("tab_meins") {
+            
+            public ItemStack getTabIconItem() {
+                return new ItemStack(Item.getItemFromBlock(BlockInit.BLOCK_COPPER));
+            }
+        };
+    getTabIconItem setzt das anzuzeigende Icon
+    
+    
+Spawning Enteties:
+    - world.spawnEntity(new EntityZombie(world));
+    
+    
+BlockStates / IProperty:
+    - Add new Blockstate public static final PropertyInteger GAMEMODE = PropertyInteger.create("gamemode", 0, 3);
+    - Override:
+        createBlockState and return new BlockStateContainer(this, new IProperty[] {GAMEMODE});
+        getMetaFromState and return state.getValue(GAMEMODE);
+        getStateFromMeta and return this.getDefaultState().withProperty(GAMEMODE, meta);
+    - set State of a Block:
+        world.setBlockState(pos, this.getDefaultState().withProperty(GAMEMODE, Integer.valueOf(1)), 2);
+    - JSON Dateien:
+        - blockstates: unter variants die einzelnen Werte festlegen: "gamemode=0": {"model": "dtm:tutorial_block"},
+        - block: verschiedene Dateien möglich, um sie in blockstates zu verwenden
+        - item: normal
+    - Getting Blockstate
+   
+
+JSON Dateien:
+    - blockstates: variants: normal = ohne blockstates
+                   variants: blockstate=wert = mit blockstates
+        - setzt das anzuzeigende Model
+    - models/block: parent, texture: all = bei gleichter textur auf jeder Seite
+                    parent, texture, north, west, up, down... = bei verschiedenen Texturen auf jeder Seite
+                    Texturen unter Textures block
+    - models/item: parent: model to show in inventory
+    
+    
+GUIs:
+    - mc = Minecraft.getMinecraft()
+    - Öffnen: if not worldIn.isRemote: Minecraft.getMinecraft.displayGuiScreen(new GuiTutorial())
+    - schließen: like open gui just NULL as parameter
+    - new class extends GuiScreen
+    - GUI Image needs to be 256*256
+    - Override Methods:
+        - drawScreen: any textures, buttons and stuff will be drawn here
+        - initGui: called when GUI is opened or window size changes
+        - actionPerformed: get a button pressed
+        - keyTyped: get input
+        - doesGuiPauseGame: return true / false
+        - onGuiClosed: ...
+    - drawScreen:
+        - stuff gets drawn in the order in the code
+        - get Texture: ResourceLocation texture = new ResourceLocation(Reference.MOD_ID, "textures/gui/book.png");
+        - file ending matters
+        - need to know width and height of the texture and maybe store it in a variable
+        - drawDefaultBackground(): draws the slightly blacked bg
+        - render Image: Minecraft.getMinecraft.renderEngine.bindTexture(texture)
+        - drawTextureModalRect(): draws the texture
+        - to center create 2 in vars in the class and set them as arg 1/2 in drawTexture (screenheight with height and width)
+        - write sth: drawString(fontrenderer) (color as hex 0x100100)
+                     drawCenteredString() = draws String centere arround ist anchor pos
+                     fontRenderer.getStringWidth(): returns length of string
+                     write without shadow: fontRenderer.drawString(title, usw.)
+        - GlStateManager:
+            - after drawing a String on the Screen the renderer binds the font texture -> retype mc.renderengine.bindTexture
+            - color is also fucked up: GLStateManager.PushMatrix() -> GLStateManager.Color(1,1,1,1) -> GLStateManager.popMatrix
+                - always as many pops as pushes
+            - lsm.enableAlpha and glsm.enableBlend -> transparent gui
+    - create Buttons:
+        - create a GuiButton variable (GuiButton button1;)
+        - create ID for the button (static final BUTTON1 = 0;)
+        - best place to add them is in initGui, because its called only once
+        - buttonList come from GuiScreen containing all butons
+        - buttonList.add(button1 = new GuiButton(BUTTON1, 0, 0, 100, 20, "Button")); (id, start, size, text)
+        - useful tip: create updateButtons() called after every clicked button
+        - buttons behind some other button: replace super in the end of drawScreen with button1.drawButton(mc, mouceX, mouseY, ticks)
+    - get button pressed:
+        - in actionPerformed create a switch over button.id
+    - add Item too Gui:
+        - mc.getRenderItem().renderItemAndEffectIntoGUI(ItemStack, pos, pos)
+        - works with blocks aswell
+        - enlarge item / text: in a GlManager Matrix: Glsm.scale(2,2,2) then render it; move before
+        - moving items: glsm.translate(x, y, 0), rendered coords must be 0
+        - rotate: (not working) glsm.rotate(angle, axisX, axisY, axisZ) put numbers of rootations in axis 
+    - hovering text:
+        - in an if statement check if mouseX and Y are above the object
+        - then drawHoveringText(List<String>, , position to show X / Y)
+    - TextField / input:
+        - GuiTextFiled var; = input
+        - use in initGui;   textBox1 = new GuiTextField();
+        - draw in drawScreen with textBox1.drawTextBox()
+        - in keyPressed: textBox1.textboxKeyTyped(typedChar, keyCode);
+        - in mouseClicked: textBox1.mouseClicked(mouseX, mouseY, mouseButton);
+    - custom Buttons:
+        - create a new class extending GuiButton
+        - use constructor without size of button
+        - add x and y of button size after y coord in super
+        - override drawbutton and remove its super
+        - ggf:
+            - add parrent to GuiButtonTutorial: GuiScreen parrent; as var and in the constructor
+            - in drawButton GuiTutorial gui = (GuiTutorial) parrent;
+        - in drawButton you customize the drawn button
+        - remove super in drawButton
+    - Translate Text:
+        - instead of "string" use I18n.format("gui.string")
+        - https://youtu.be/MHgS0GTNqq0?t=7300
+       
+
+Overlays:
+    - create new class extending Gui
+    - create eventHandler RenderGameOverlayEvent (@SubscribeEvent and register class in Main)
+    - check if event Type is RenderGameOverlayEvent.ElementType.TEXT then
+    - add ResourceLocation for the file
+    
+    
+Inventorys / Tile-Entitys:
+    - Tile-Entity = Entity attatched to block
+    - ggf create new Block
+    - Override createNewTileEntity, blockActivated, blockBreak
+    - create new class extending TileEntity
+    - Block Class:
+        - createNewTileEntity: return new TileEntityTutootial class
+        
+    - TileEntity Class:
+        - ItemStackHandler inventory = new ItemStackHandler(9); (9 = size in stacks)
+        - Override: read 7 write nbt, has / gtCapabilities
+    - Add a Container Class extending Container
+        - Add canInteractWith and transferStackInSlot
+    - Create the Gui:
+        - create new Gui class extending GuiContainer
+    - restrict items to slot:
+        - create new class (SlotTutorial) extending SlotItemHandler
+        - override isItemvalid
+        - if it fits return true
+        
+
+
+
+
+
+
+    

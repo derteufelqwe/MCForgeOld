@@ -1,0 +1,35 @@
+{
+    "type": "minecraft:crafting_shaped",
+    
+    "pattern":
+    [
+        "IEI",
+        "ISI",
+        "IBI"
+    ],
+    
+    "key": 
+    {
+        "I": 
+        {
+            "item": "minecraft:ink_sack" 
+        },
+        "E": 
+        {
+            "item": "minecraft:emerald" 
+        },
+        "S": 
+        {
+            "item": "minecraft:diamond_block" 
+        },
+        "B": 
+        {
+            "item": "minecraft:diamond_block" 
+        }
+    },
+    
+    "result": 
+    {
+        "item": "dtm:tutorial_sword"
+    }
+}
